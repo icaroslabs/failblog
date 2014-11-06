@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title>FailBlog Part Deux</title>
+	<h:outputStylesheet library="default" name="css/styles.css" />
+	<f:loadBundle basename="messages" var="msg" />
+</h:head>
+<h:body>
+	<div id="body">
+		<div id="header">
+			<h1 class="title">FailBlog Part Deux</h1>
+		</div>
+		<div id="content">
+			<div id="leftcontent">
+
+
+				<!-- Login Form -->
+				<div id="control">
+					<h:form rendered="#{not userController.authenticated}">
+						<h:panelGrid columns="2">
+							<h:outputText value="Username:" />
+							<h:inputText value="#{userController.username}" required="true"
+								requiredMessage="Username required" />
+							<h:outputText value="Password:" />
+							<h:inputSecret value="#{userController.password}" required="true"
+								requiredMessage="Password required" />
+						</h:panelGrid>
+						<p:commandButton value="Login" ajax="false"
+							actionListener="#{userController.login}" />
+						<p:commandButton id="registerButton" value="Register" ajax="false"
+							onclick="PF('dlgreg').show();" type="button" />
+						<h:messages styleClass="error" />
+					</h:form>
+
+
+					<!-- Registration Dialog -->
+					<div class="dialog">
+						<p:dialog id="registerDialog" widgetVar="dlgreg" header="Register"
+							modal="true">
+							<h:form id="registerForm">
+								<h:panelGrid columns="3">
+
+									<f:event listener="#{validator.validatePasswords}"
+										type="postValidate" />
+
+									<h:outputText value="First Name" />
+									<h:inputText value="#{userController.firstname}" id="firstname"
+										required="true" requiredMessage="First name required" />
+									<h:message for="firstname" styleClass="error" />
+
+									<h:outputText value="Last Name" />
+									<h:inputText value="#{userController.lastname}" id="lastname"
+										required="true" requiredMessage="Last name required" />
+									<h:message for="lastname" styleClass="error" />
+
+									<h:outputText value="Email" />
+									<h:inputText value="#{userController.email}" id="email"
+										required="true" requiredMessage="Email required"
+										validatorMessage="Email must be of the proper format">
+										<f:validateRegex
+											pattern="[\w\.-]*[a-zA-Z0-9_]@[\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]" />
+									</h:inputText>
+									<h:message for="email" styleClass="error" />
+
+									<h:outputText value="Desired Username" />
+									<h:inputText value="#{userController.username}" id="username"
+										required="true" requiredMessage="Username required"
+										validatorMessage="Username must be between 5-25 characters">
+										<f:validateLength minimum="5" maximum="25" />
+									</h:inputText>
+									<h:message for="username" styleClass="error" />
+
+									<h:outputText value="Password" />
+									<h:inputSecret value="#{userController.password}" id="password"
+										required="true" requiredMessage="Password required"
+										validatorMessage="Password must be 6-25 characters with at least one number">
+										<f:validateRegex pattern="^(?=.*[0-9])(?=\S+$).{6,25}$" />
+									</h:inputSecret>
+									<h:message for="password" styleClass="error" />
+
+									<h:outputText value="Confirm Password" />
+									<h:inputSecret value="#{userController.confirmPassword}"
+										id="confirmPassword" required="true"
+										requiredMessage="Passwords must match" />
+									<h:message for="confirmPassword" styleClass="error" />
+								</h:panelGrid>
+
+								<p:commandButton value="Submit" ajax="false"
+									action="#{userController.createUser}" />
+								<p:commandButton value="Cancel" immediate="true" ajax="false"
+									action="#{userController.cancelCreateUser}" />
+								<h:messages for="registerForm" styleClass="error" />
+							</h:form>
+						</p:dialog>
+					</div>
+
+
+					<!-- User Control Panel -->
+					<h:form rendered="#{userController.authenticated}">
+						<h4>
+							<h:outputText value="Welcome #{userController.user.username}" />
+						</h4>
+						<h:panelGrid columns="2">
+							<p:commandButton value="Logout" ajax="false"
+								action="#{userController.logout}">
+								<f:setPropertyActionListener target="#{blogController.editable}"
+									value="false" />
+							</p:commandButton>
+							<p:commandButton action="#{blogController.newBlog}" value="New"
+								ajax="false">
+								<f:setPropertyActionListener target="#{blogController.userid}"
+									value="#{userController.user.userid}" />
+							</p:commandButton>
+						</h:panelGrid>
+					</h:form>
+				</div>
+			</div>
+			
+
+            <div id="rightcontent">
+                <!-- Blog Directory -->
+                <div id="dir">
+                    <h:form>
+                        <h:outputText value="Sort By: " />
+                        <p:selectOneMenu value="#{topicController.topic}" effect="fade">
+                            <f:selectItem itemLabel="Select One" itemValue="" />
+                            <f:selectItems value="#{topicController.topics}" var="topic"
+                                itemLabel="#{topic}" itemValue="#{topic}" />
+                        </p:selectOneMenu>
+                        <strong>#{topicController.topic}</strong>
+                    </h:form>
+
+                    <h:form>
+                        <h:dataTable var="blog" value="#{blogController.blogs}">
+                            <h:column>
+                                <p:commandLink value="#{blog}" ajax="false"
+                                    action="#{blogController.renderBlog()}">
+                                    <f:setPropertyActionListener target="#{blogController.blog}"
+                                        value="#{blog}" />
+                                    <f:setPropertyActionListener
+                                        target="#{commentController.blogid}" value="#{blog.blogid}" />
+                                </p:commandLink>
+                            </h:column>
+                        </h:dataTable>
+                    </h:form>
+                </div>
+            </div>
+
+
+			<div id="centercontent">
+				<!-- Blog Content -->
+				<h:panelGroup rendered="#{not blogController.editable}">
+					<!--                    <div id="title"> -->
+					<!--                        <h2> -->
+					<!--                            <h:outputText escape="false" value="#{blogController.blog.title}" /> -->
+					<!--                        </h2> -->
+					<!--                    </div> -->
+					<!--                    <div id="blog"> -->
+					<!--                        <h:outputText escape="false" -->
+					<!--                            value="#{blogController.blog.content}" /> -->
+					<!--                    </div> -->
+					<p:fieldset legend="#{blogController.blog.title}">
+						<h:outputText escape="false"
+							value="#{blogController.blog.content}"></h:outputText>
+					</p:fieldset>
+				</h:panelGroup>
+
+				<!-- Edit/Delete controls if authenticated and owner -->
+				<h:form
+					rendered="#{userController.authenticated and not blogController.editable}">
+					<div id="control">
+						<p:commandButton action="#{blogController.editBlog}" value="Edit"
+							ajax="false"
+							rendered="#{blogController.blog.userid eq userController.user.userid}" />
+						<p:commandButton action="#{blogController.removeBlog}"
+							ajax="false" value="Delete"
+							rendered="#{blogController.blog.userid eq userController.user.userid}" />
+					</div>
+				</h:form>
+
+
+				<!-- New/Edit Blog Form -->
+				<h:form rendered="#{blogController.editable}">
+					<div id="title">
+						<h:inputText value="#{blogController.blog.title}" cols="50"
+							id="title" required="true" requiredMessage="Title required" />
+						<h:message for="title" styleClass="error" />
+					</div>
+					<div id="content">
+						<p:editor id="editor" value="#{blogController.blog.content}"
+							width="475" />
+						<h:inputText value="#{blogController.blog.meta}" />
+					</div>
+					<div>
+						<p:commandButton action="#{blogController.saveBlog}" value="Save"
+							ajax="false" />
+						<p:commandButton action="#{blogController.cancelBlog}"
+							ajax="false" value="Cancel" immediate="true" />
+					</div>
+				</h:form>
+
+
+				<!-- Comment Section -->
+				<div id="comments">
+					<h:form rendered="#{not blogController.editable}">
+						<h:dataTable var="commentEntry"
+							value="#{commentController.comments}">
+							<h:column>
+								<div id="commenthead">
+									<h:outputText escape="true" value="#{commentEntry.username}" />
+								</div>
+								<div id="commentbody">
+									<h:outputText escape="true" value="#{commentEntry.content}" />
+								</div>
+							</h:column>
+						</h:dataTable>
+
+						<div class="commentbody">
+							<h:inputTextarea value="#{commentController.comment.content}"
+								rows="2" cols="30" />
+						</div>
+
+						<div>
+							<p:commandButton action="#{commentController.saveComment}"
+								value="Save" ajax="false">
+								<f:setPropertyActionListener
+									target="#{commentController.username}"
+									value="#{userController.user.username}" />
+								<f:setPropertyActionListener
+									target="#{commentController.comment.blogid}"
+									value="#{blogController.blogid}" />
+							</p:commandButton>
+							<p:commandButton action="#{commentController.cancelComment}"
+								value="Cancel" ajax="false" />
+						</div>
+					</h:form>
+				</div>
+
+			</div>
+
+
+		</div>
+		<div id="footer">
+			<p>FailBlog Part Deux by josh</p>
+		</div>
+	</div>
+</h:body>
+</html>
